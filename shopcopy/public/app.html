@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShopCopy AI — Shopify Content Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0a; --surface: #111111; --surface2: #1a1a1a; --border: #2a2a2a;
+    --accent: #00e5a0; --accent2: #ff6b35; --accent3: #7b61ff;
+    --text: #f0f0f0; --muted: #666; --muted2: #999;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 400; min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,229,160,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,0.03) 1px,transparent 1px); background-size: 60px 60px; pointer-events: none; z-index: 0; }
+  .orb { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; }
+  .orb-1 { width: 500px; height: 500px; background: rgba(0,229,160,0.06); top: -100px; right: -100px; }
+  .orb-2 { width: 400px; height: 400px; background: rgba(123,97,255,0.06); bottom: 100px; left: -100px; }
+
+  header { position: relative; z-index: 10; padding: 22px 40px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+  .logo { display: flex; align-items: baseline; gap: 6px; }
+  .logo-mark { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; }
+  .logo-badge { background: var(--accent); color: #000; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .header-nav { display: flex; align-items: center; gap: 24px; }
+  .header-nav a { font-size: 13px; color: var(--muted2); text-decoration: none; transition: color 0.2s; }
+  .header-nav a:hover { color: var(--text); }
+  .pro-pill { background: rgba(0,229,160,0.1); border: 1px solid var(--accent); color: var(--accent); font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .usage-badge { font-size: 12px; color: var(--muted2); font-weight: 400; }
+  .usage-badge strong { color: var(--accent); }
+
+  /* Upgrade Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.visible { display: flex; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 40px 32px; max-width: 420px; width: 100%; text-align: center; position: relative; animation: slideUp 0.3s ease; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .modal-close { position: absolute; top: 16px; right: 18px; background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; transition: color 0.2s; }
+  .modal-close:hover { color: var(--text); }
+  .modal-icon { font-size: 48px; margin-bottom: 16px; }
+  .modal h2 { font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 2px; margin-bottom: 8px; }
+  .modal h2 span { color: var(--accent); }
+  .modal p { font-size: 14px; color: var(--muted2); line-height: 1.6; margin-bottom: 24px; }
+  .modal .btn-modal { display: block; width: 100%; padding: 14px; background: var(--accent); color: #000; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; transition: all 0.2s; text-decoration: none; text-align: center; margin-bottom: 10px; }
+  .modal .btn-modal:hover { background: #00ffb3; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,229,160,0.25); }
+  .modal .btn-modal-secondary { display: block; font-size: 13px; color: var(--muted2); text-decoration: none; transition: color 0.2s; }
+  .modal .btn-modal-secondary:hover { color: var(--text); }
+  .header-tag { font-size: 13px; color: var(--muted); font-weight: 300; }
+
+  .hero { position: relative; z-index: 10; text-align: center; padding: 60px 40px 40px; }
+  .hero-eyebrow { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 18px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .hero-eyebrow::before, .hero-eyebrow::after { content: ''; width: 30px; height: 1px; background: var(--accent); opacity: 0.4; }
+  h1 { font-family: 'Bebas Neue', sans-serif; font-size: clamp(48px, 8vw, 90px); line-height: 0.95; letter-spacing: 3px; margin-bottom: 18px; }
+  h1 span { color: var(--accent); }
+  .hero-sub { font-size: 15px; color: var(--muted2); font-weight: 300; max-width: 440px; margin: 0 auto; line-height: 1.6; }
+
+  .tabs-wrap { position: relative; z-index: 10; display: flex; max-width: 600px; margin: 36px auto 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 5px; }
+  .tab { flex: 1; background: none; border: none; padding: 11px 14px; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--muted); transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .tab:hover { color: var(--text); }
+  .tab.active { background: var(--surface2); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+  .tab-dot { width: 6px; height: 6px; border-radius: 50%; opacity: 0.3; transition: opacity 0.2s; }
+  .tab.active .tab-dot { opacity: 1; }
+  .tab:nth-child(1) .tab-dot { background: var(--accent); }
+  .tab:nth-child(2) .tab-dot { background: var(--accent2); }
+  .tab:nth-child(3) .tab-dot { background: var(--accent3); }
+
+  main { position: relative; z-index: 10; max-width: 860px; margin: 28px auto 80px; padding: 0 20px; }
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeUp 0.3s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .card-header { padding: 22px 26px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+  .card-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+  .icon-green { background: rgba(0,229,160,0.12); } .icon-orange { background: rgba(255,107,53,0.12); } .icon-purple { background: rgba(123,97,255,0.12); }
+  .card-title { font-size: 15px; font-weight: 600; } .card-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .card-body { padding: 24px; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.span-2 { grid-column: span 2; }
+  label { font-size: 11px; font-weight: 500; color: var(--muted2); letter-spacing: 0.5px; text-transform: uppercase; }
+  input, textarea { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 10px 13px; transition: border-color 0.2s, box-shadow 0.2s; outline: none; width: 100%; resize: none; }
+  input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,160,0.08); }
+  textarea { min-height: 80px; }
+
+  .pill-group { display: flex; flex-wrap: wrap; gap: 7px; }
+  .pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 5px 13px; font-size: 12px; color: var(--muted2); cursor: pointer; transition: all 0.15s; user-select: none; }
+  .pill:hover { color: var(--text); } .pill.selected { border-color: var(--accent); color: var(--accent); background: rgba(0,229,160,0.07); }
+
+  .btn-generate { width: 100%; margin-top: 18px; padding: 14px; background: var(--accent); color: #000; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-generate:hover { background: #00ffb3; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,229,160,0.25); }
+  .btn-generate:active { transform: translateY(0); }
+  .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-generate.orange { background: var(--accent2); } .btn-generate.orange:hover { background: #ff8a5e; }
+  .btn-generate.purple { background: var(--accent3); } .btn-generate.purple:hover { background: #9d87ff; }
+
+  .spinner { width: 15px; height: 15px; border: 2px solid rgba(0,0,0,0.2); border-top-color: #000; border-radius: 50%; animation: spin 0.6s linear infinite; display: none; }
+  .btn-generate.loading .spinner { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .output-wrap { margin-top: 18px; display: none; }
+  .output-wrap.visible { display: block; animation: fadeUp 0.3s ease; }
+  .output-label { font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 9px; display: flex; align-items: center; justify-content: space-between; }
+  .copy-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--muted2); font-family: 'DM Sans', sans-serif; font-size: 11px; padding: 4px 10px; border-radius: 6px; cursor: pointer; transition: all 0.15s; text-transform: none; letter-spacing: 0; }
+  .copy-btn:hover { color: var(--text); } .copy-btn.copied { color: var(--accent); border-color: var(--accent); }
+  .output-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; font-size: 14px; line-height: 1.75; color: var(--text); white-space: pre-wrap; min-height: 80px; }
+
+  .ad-outputs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .ad-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 15px; }
+  .ad-card-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 9px; display: flex; align-items: center; justify-content: space-between; }
+  .ad-text { font-size: 13px; line-height: 1.65; color: var(--text); white-space: pre-wrap; }
+
+  footer { position: relative; z-index: 10; text-align: center; padding: 22px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+  footer span { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    header { padding: 18px; } .hero { padding: 36px 18px 28px; }
+    .form-grid { grid-template-columns: 1fr; } .field.span-2 { grid-column: span 1; }
+    .ad-outputs { grid-template-columns: 1fr; } .tabs-wrap { margin: 26px 14px 0; } main { padding: 0 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<header>
+  <div class="logo"><span class="logo-mark">ShopCopy</span><span class="logo-badge">AI</span></div>
+  <div class="header-nav">
+    <span class="usage-badge" id="usage-badge"></span>
+    <a href="/pricing">Pricing</a>
+  </div>
+</header>
+
+<!-- Upgrade Modal -->
+<div class="modal-overlay" id="upgrade-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <div class="modal-icon">&#128640;</div>
+    <h2>Go <span>Pro</span></h2>
+    <p>You've used all 3 free generations for today. Upgrade to Pro for unlimited access — one payment, no subscriptions.</p>
+    <a href="/pricing" class="btn-modal">Upgrade for $29</a>
+    <a href="#" class="btn-modal-secondary" onclick="closeModal(); return false;">I'll wait until tomorrow</a>
+  </div>
+</div>
+
+<section class="hero">
+  <div class="hero-eyebrow">Powered by AI</div>
+  <h1>Copy that<br><span>converts.</span></h1>
+  <p class="hero-sub">Generate product descriptions, full listings, and ad copy for your Shopify store — in seconds.</p>
+</section>
+
+<div class="tabs-wrap">
+  <button class="tab active" onclick="switchTab(0)"><span class="tab-dot"></span> Product Description</button>
+  <button class="tab" onclick="switchTab(1)"><span class="tab-dot"></span> Full Listing</button>
+  <button class="tab" onclick="switchTab(2)"><span class="tab-dot"></span> Ad Copy</button>
+</div>
+
+<main>
+  <!-- PANEL 1 -->
+  <div class="panel active" id="panel-0">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-green">✍️</div>
+        <div><div class="card-title">Product Description Writer</div><div class="card-desc">Compelling, conversion-focused product descriptions</div></div>
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="field"><label>Product Name</label><input type="text" id="desc-name" placeholder="e.g. Matte Black Tumbler"/></div>
+          <div class="field"><label>Category</label><input type="text" id="desc-category" placeholder="e.g. Drinkware, Apparel..."/></div>
+          <div class="field span-2"><label>Key Features / Details</label><textarea id="desc-features" placeholder="e.g. 20oz, double-walled, keeps drinks cold 24hrs, BPA-free"></textarea></div>
+          <div class="field"><label>Target Audience</label><input type="text" id="desc-audience" placeholder="e.g. gym-goers, busy moms..."/></div>
+          <div class="field"><label>Tone</label>
+            <div class="pill-group" id="desc-tone">
+              <span class="pill selected" data-val="conversational">Conversational</span>
+              <span class="pill" data-val="professional">Professional</span>
+              <span class="pill" data-val="playful">Playful</span>
+              <span class="pill" data-val="luxury">Luxury</span>
+              <span class="pill" data-val="bold">Bold</span>
+            </div>
+          </div>
+        </div>
+        <button class="btn-generate" id="btn-desc" onclick="generate('description')"><div class="spinner"></div><span class="btn-text">✦ Generate Description</span></button>
+        <div class="output-wrap" id="desc-output">
+          <div class="output-label">Generated Description <button class="copy-btn" onclick="copyOutput('desc-box',this)">Copy</button></div>
+          <div class="output-box" id="desc-box"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 2 -->
+  <div class="panel" id="panel-1">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-orange">📦</div>
+        <div><div class="card-title">Full Listing Generator</div><div class="card-desc">SEO title, description, bullet points & tags</div></div>
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="field"><label>Product Name</label><input type="text" id="listing-name" placeholder="e.g. Ceramic Pour-Over Coffee Set"/></div>
+          <div class="field"><label>Price Point</label><input type="text" id="listing-price" placeholder="e.g. $45, budget, premium..."/></div>
+          <div class="field span-2"><label>Product Details</label><textarea id="listing-details" placeholder="Materials, dimensions, colors, what's included, unique selling points..."></textarea></div>
+          <div class="field"><label>Primary Keywords</label><input type="text" id="listing-keywords" placeholder="e.g. pour over coffee, barista gift"/></div>
+          <div class="field"><label>Target Customer</label><input type="text" id="listing-customer" placeholder="e.g. coffee enthusiasts, gift buyers"/></div>
+        </div>
+        <button class="btn-generate orange" id="btn-listing" onclick="generate('listing')"><div class="spinner"></div><span class="btn-text">✦ Generate Full Listing</span></button>
+        <div class="output-wrap" id="listing-output">
+          <div class="output-label">Generated Listing <button class="copy-btn" onclick="copyOutput('listing-box',this)">Copy</button></div>
+          <div class="output-box" id="listing-box"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 3 -->
+  <div class="panel" id="panel-2">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-purple">📣</div>
+        <div><div class="card-title">Ad Copy Generator</div><div class="card-desc">Facebook & Instagram ads ready to launch</div></div>
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="field"><label>Product Name</label><input type="text" id="ad-name" placeholder="e.g. Minimalist Leather Wallet"/></div>
+          <div class="field"><label>Offer / Hook</label><input type="text" id="ad-offer" placeholder="e.g. 30% off, free shipping, limited stock"/></div>
+          <div class="field span-2"><label>Product Highlights</label><textarea id="ad-highlights" placeholder="What makes this special? Key benefits, pain point it solves..."></textarea></div>
+          <div class="field"><label>Target Audience</label><input type="text" id="ad-audience" placeholder="e.g. men 25-45, gift shoppers"/></div>
+          <div class="field"><label>Ad Goal</label>
+            <div class="pill-group" id="ad-goal">
+              <span class="pill selected" data-val="drive sales">Drive Sales</span>
+              <span class="pill" data-val="build awareness">Brand Awareness</span>
+              <span class="pill" data-val="retargeting">Retargeting</span>
+            </div>
+          </div>
+        </div>
+        <button class="btn-generate purple" id="btn-ads" onclick="generate('ads')"><div class="spinner"></div><span class="btn-text">✦ Generate Ad Copy</span></button>
+        <div class="output-wrap" id="ads-output">
+          <div class="output-label">Generated Ads</div>
+          <div class="ad-outputs" id="ads-box"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>Built with <span>ShopCopy AI</span> — Write better copy, faster.</footer>
+
+<script>
+  // Usage tracking
+  var usageState = { allowed: true, remaining: 3, pro: false };
+
+  function updateUsageBadge() {
+    var badge = document.getElementById('usage-badge');
+    if (usageState.pro) {
+      badge.innerHTML = '<span class="pro-pill">PRO</span>';
+    } else {
+      badge.innerHTML = '<strong>' + usageState.remaining + '</strong>/3 free today';
+    }
+  }
+
+  async function checkUsage() {
+    try {
+      var res = await fetch('/api/usage?action=check');
+      if (res.ok) { usageState = await res.json(); updateUsageBadge(); }
+    } catch (e) { /* fallback: allow */ }
+  }
+
+  async function incrementUsage() {
+    try {
+      var res = await fetch('/api/usage?action=increment');
+      var data = await res.json();
+      usageState = data;
+      updateUsageBadge();
+      return data.allowed;
+    } catch (e) { return true; }
+  }
+
+  function showUpgradeModal() {
+    document.getElementById('upgrade-modal').classList.add('visible');
+  }
+  function closeModal() {
+    document.getElementById('upgrade-modal').classList.remove('visible');
+  }
+
+  // Check on load
+  checkUsage();
+
+  function switchTab(idx) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+    document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i===idx));
+  }
+
+  document.querySelectorAll('.pill-group').forEach(group => {
+    group.querySelectorAll('.pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        group.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+        pill.classList.add('selected');
+      });
+    });
+  });
+
+  function getSelectedPill(id) {
+    const s = document.querySelector(`#${id} .pill.selected`);
+    return s ? s.dataset.val : '';
+  }
+
+  function copyOutput(boxId, btn) {
+    navigator.clipboard.writeText(document.getElementById(boxId).innerText).then(() => {
+      btn.textContent='Copied!'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent='Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  function copyText(btn, text) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent='Copied!'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent='Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  async function callAI(prompt) {
+    const encoded = encodeURIComponent(prompt);
+    const url = `https://text.pollinations.ai/${encoded}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Failed to get response');
+    const text = await res.text();
+    return text.trim();
+  }
+
+  async function generate(type) {
+    let prompt='', btn, outputWrap, outputBox;
+
+    if (type === 'description') {
+      const name = document.getElementById('desc-name').value.trim();
+      if (!name) return alert('Please enter a product name.');
+      prompt = `You are a professional Shopify copywriter. Write a compelling product description for: "${name}".
+Category: ${document.getElementById('desc-category').value.trim()||'not specified'}
+Key features: ${document.getElementById('desc-features').value.trim()||'not specified'}
+Target audience: ${document.getElementById('desc-audience').value.trim()||'general consumers'}
+Tone: ${getSelectedPill('desc-tone')}
+
+Write exactly 2-3 paragraphs. Start with a strong hook. Focus on benefits over features. End with a call to action. No bullet points, no title, just flowing prose.`;
+      btn=document.getElementById('btn-desc'); outputWrap=document.getElementById('desc-output'); outputBox=document.getElementById('desc-box');
+    }
+    else if (type === 'listing') {
+      const name = document.getElementById('listing-name').value.trim();
+      if (!name) return alert('Please enter a product name.');
+      prompt = `You are a Shopify SEO expert. Create a complete product listing for: "${name}".
+Price: ${document.getElementById('listing-price').value.trim()||'mid-range'}
+Details: ${document.getElementById('listing-details').value.trim()||'not specified'}
+Keywords: ${document.getElementById('listing-keywords').value.trim()||'not specified'}
+Customer: ${document.getElementById('listing-customer').value.trim()||'general'}
+
+Reply in this exact format only:
+
+SEO TITLE:
+[write title here, max 70 chars]
+
+DESCRIPTION:
+[write 2 paragraphs here]
+
+KEY BENEFITS:
+• [benefit 1]
+• [benefit 2]
+• [benefit 3]
+• [benefit 4]
+• [benefit 5]
+
+TAGS:
+[write 12-15 comma separated tags]
+
+META DESCRIPTION:
+[write 160 char meta description]`;
+      btn=document.getElementById('btn-listing'); outputWrap=document.getElementById('listing-output'); outputBox=document.getElementById('listing-box');
+    }
+    else if (type === 'ads') {
+      const name = document.getElementById('ad-name').value.trim();
+      if (!name) return alert('Please enter a product name.');
+      prompt = `You are a social media ad copywriter. Write ad copy for Shopify product: "${name}".
+Offer: ${document.getElementById('ad-offer').value.trim()||'none'}
+Highlights: ${document.getElementById('ad-highlights').value.trim()||'not specified'}
+Audience: ${document.getElementById('ad-audience').value.trim()||'general'}
+Goal: ${getSelectedPill('ad-goal')}
+
+Reply in this exact format only:
+
+FACEBOOK AD:
+Headline: [headline max 40 chars]
+Primary Text: [2-3 sentences with hook and CTA]
+Description: [one punchy line]
+
+INSTAGRAM AD:
+Caption: [3-4 lines ending with CTA]
+Hashtags: [10 relevant hashtags]
+
+INSTAGRAM STORY:
+Line 1: [bold hook, 5 words max]
+Line 2: [key benefit, 8 words max]
+CTA: [action phrase, 4 words max]`;
+      btn=document.getElementById('btn-ads'); outputWrap=document.getElementById('ads-output'); outputBox=document.getElementById('ads-box');
+    }
+
+    btn.disabled=true; btn.classList.add('loading');
+    btn.querySelector('.btn-text').textContent='Generating...';
+
+    // Check usage limit before generating
+    if (!usageState.pro && usageState.remaining <= 0) {
+      btn.disabled=false; btn.classList.remove('loading');
+      btn.querySelector('.btn-text').textContent=type==='description'?'✦ Generate Description':type==='listing'?'✦ Generate Full Listing':'✦ Generate Ad Copy';
+      showUpgradeModal();
+      return;
+    }
+
+    try {
+      // Increment usage first
+      var allowed = await incrementUsage();
+      if (!allowed) {
+        btn.disabled=false; btn.classList.remove('loading');
+        btn.querySelector('.btn-text').textContent=type==='description'?'✦ Generate Description':type==='listing'?'✦ Generate Full Listing':'✦ Generate Ad Copy';
+        showUpgradeModal();
+        return;
+      }
+
+      const text = await callAI(prompt);
+
+      if (type === 'ads') {
+        outputBox.innerHTML='';
+        const sections=[{key:'FACEBOOK AD',label:'📘 Facebook Ad'},{key:'INSTAGRAM AD',label:'📸 Instagram Ad'},{key:'INSTAGRAM STORY',label:'⚡ Story'}];
+        sections.forEach(({key,label},i) => {
+          const regex=new RegExp(`${key}:([\\s\\S]*?)(?=${sections[i+1]?.key+':'}|$)`);
+          const match=text.match(regex);
+          const content=match?match[1].trim():'';
+          const card=document.createElement('div');
+          card.className='ad-card';
+          const safe=content.replace(/\\/g,'\\\\').replace(/`/g,'\\`');
+          card.innerHTML=`<div class="ad-card-title">${label}<button class="copy-btn" onclick="copyText(this,\`${safe}\`)">Copy</button></div><div class="ad-text">${content}</div>`;
+          outputBox.appendChild(card);
+        });
+        if(!outputBox.children.length) outputBox.innerHTML=`<div class="ad-card" style="grid-column:span 2"><div class="ad-text">${text}</div></div>`;
+      } else {
+        outputBox.textContent=text;
+      }
+      outputWrap.classList.add('visible');
+    } catch(err) {
+      alert('Something went wrong. Please check your internet connection and try again.');
+      console.error(err);
+    } finally {
+      btn.disabled=false; btn.classList.remove('loading');
+      btn.querySelector('.btn-text').textContent=type==='description'?'✦ Generate Description':type==='listing'?'✦ Generate Full Listing':'✦ Generate Ad Copy';
+    }
+  }
+</script>
+</body>
+</html>

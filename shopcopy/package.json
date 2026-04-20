@@ -1,0 +1,13 @@
+{
+  "name": "shopcopy-ai",
+  "version": "1.0.0",
+  "description": "ShopCopy AI - Shopify Content Generator",
+  "scripts": {
+    "build": "echo 'No build step needed'"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^10.7.4",
+    "@netlify/functions": "^5.2.0",
+    "stripe": "^22.0.1"
+  }
+}
